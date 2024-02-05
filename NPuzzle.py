@@ -5,11 +5,14 @@ import numpy as np
 import copy
 import heapq as hq
 from treelib import Tree, exceptions as x
+import sys
+
+sys.setrecursionlimit(10**6)
 
 goalArray = [1, 2, 3, 4, 5, 6, 7, 8, 0]
 
-bestFirst = 0
-aStar = 1
+aStar = 0
+bestFirst = 1
 
 h1 = 0
 h2 = 1
@@ -19,11 +22,15 @@ class grid:
     def __init__(self, size, arr):
         self.size = size + 1
         self.width = int(math.sqrt(self.size))
-        self.array = np.array(arr)
+        self.array = ()
         self.goal = np.array(goalArray)
+        self.parent = None
+
+        self.array = np.array(arr)
     
     @staticmethod
     def find(array, num):
+        # print(f"{array} {np.where(array == num)[0]}")
         return np.where(array == num)[0]
 
     def getBlank(self):
@@ -60,29 +67,28 @@ class grid:
         return True
     
     def right(self):
-        e = self.empty()
+        e = self.getBlank()
         if (e + 1) % self.width == 0:
             return False
         self.swap(e, e + 1)
         return True
     
-    def diff(self, num, col):
+    def rowDiff(self, num):
         a = self.find(self.array, num)
-        b = self.find(goalArray, num)
-        
-        diff = 0
-        if (col):
-            diff = abs((a % self.width) - (b % self.width))
-        else:
-            diff = abs((a // self.width) - (b // self.width))
-        
+        b = self.find(self.goal, num)
+        diff = abs((a // self.width) - (b // self.width)) 
         return diff
     
+    def colDiff(self, num):
+        a = self.find(self.array, num)
+        b = self.find(self.goal, num)
+        diff = abs((a % self.width) - (b % self.width))
+        return diff
 
     def heuristic1(self):
         cost = 0
         for i in range(1, self.size):
-            if self.diff(i, False) or self.diff(i, True):
+            if self.rowDiff(i) or self.colDiff(i):
                 cost += 1
         
         return cost
@@ -90,22 +96,22 @@ class grid:
     def heuristic2(self):
         cost = 0
         for i in range(1, self.size):
-            cost += math.sqrt(pow(self.diff(i, False), 2) + pow(self.diff(i, True), 2))
+            cost += math.sqrt(pow(self.rowDiff(i), 2) + pow(self.colDiff(i), 2))
         
         return cost
         
     def heuristic3(self):
         cost = 0
         for i in range(1, self.size):
-            cost += self.diff(i, False) + self.diff(i, True)
+            cost += self.rowDiff(i) + self.colDiff(i)
         
         return cost
     
     def getString(self):
         returnStr = ""
         for i in self.array:
-            returnStr = str(i).zfill(2)
-        return returnStr()
+            returnStr += str(i).zfill(2)
+        return returnStr
     
     def solvable(self):
         if len(self.array) == 0:
@@ -120,33 +126,35 @@ class grid:
         return total % 2 == 0
     
     def solved(self):
-        if np.array_equal(self.array, self.goalArray):
+        if np.array_equal(self.array, self.goal):
             return True
         
         return False
-
-class node:
-    def __init__(self, cost, id):
-        self.cost = cost
-        self.id = id
-    
-    def __lt__ (self, comp):
-        return self.cost < comp.cost
     
 class Run:
-    def __init__(self, type, arr):
+    def __init__(self, type, arr, heuristic):
         self.tree = Tree()
         self.queue = []
         self.found = None
         self.type = type
+        self.heuristic = heuristic
 
         root = grid(8, arr)
         self.tree.create_node(root.getString(), root.getString(), data=root)
-        hq.heappush(self.queue, node(0, root.getString()))
+        hq.heappush(self.queue, self.node(0, root.getString()))
+
+    class node:
+        def __init__(self, cost, id):
+            self.cost = cost
+            self.id = id
+        
+        def __lt__ (self, comp):
+            return self.cost < comp.cost
 
     def expand(self, inNode):
         for i in range(4):
-            c = copy.deepcopy(inNode)
+            c = copy.copy(inNode)
+            c.array = np.copy(inNode.array)
             c.parent = inNode
 
             if i == 0:
@@ -163,7 +171,7 @@ class Run:
 
             fail = False
             try:
-                self.tree.create_node(c.getString(), c.getString(), parent=node.getString(), data=c)
+                self.tree.create_node(c.getString(), c.getString(), parent=inNode.getString(), data=c)
             except x.DuplicatedNodeIdError:
                 fail = True
 
@@ -172,10 +180,10 @@ class Run:
 
                 if self.heuristic == h1:
                     cost = c.heuristic1()
-                elif self.heuritic == h2:
+                elif self.heuristic == h2:
                     cost = c.heuristic2()
                 elif self.heuristic == h3:
-                    cost = c.h3()
+                    cost = c.heuristic3()
 
                 if self.type == aStar:
                     n = self.tree.get_node(c.getString())
@@ -186,25 +194,37 @@ class Run:
 
     def expandCheapest(self):
         cheapest = hq.heappop(self.queue)
-        node = self.tree.get_node(cheapest.getString()).data
+        node = self.tree.get_node(cheapest.id).data
 
-        if node.goal():
+        if node.solved():
             self.found = node
         else:
             self.expand(node)
 
     def showPath(self, node, result):
-        result.insert(0, node.arr)
+        # print(type(node))
+        result.insert(0, node.array)
+        if node.parent:
+            return self.showPath(node.parent, result)
+        else:
+            return result
+
 
     def run(self, limit=100000):
         for i in range(limit):
             self.expandCheapest()
         
-        if self.found:
-            print("Nodes expanded: ", i)
-            path = []
-            path = self.
-
+            if self.found:
+                print("Nodes expanded: ", i)
+                path = []
+                path = self.showPath(self.found, path)
+                print("Steps to find solution:", len(path))
+                for j in range(len(path)):
+                    print(path[j], end='')
+                    if j != len(path) - 1:
+                        print(" -> ", end='')
+                print()
+                break
 
 def main():
     arrs = []
@@ -219,6 +239,8 @@ def main():
             for k in range(5):
                 search = "Best-First" if i == bestFirst else "A*"
                 print(f"\nSearch method: {search}\tHeuristic: {j + 1}\tArray ({k + 1}): {arrs[k]}")
+                run = Run(i, arrs[k], j)
+                run.run()
 
     return
 
