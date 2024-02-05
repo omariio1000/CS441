@@ -2,6 +2,9 @@
 import random
 import math
 import numpy as np
+import copy
+import heapq as hq
+from treelib import Tree, exceptions as x
 
 goalArray = [1, 2, 3, 4, 5, 6, 7, 8, 0]
 
@@ -116,7 +119,7 @@ class grid:
 
         return total % 2 == 0
     
-    def goal(self):
+    def solved(self):
         if np.array_equal(self.array, self.goalArray):
             return True
         
@@ -129,6 +132,79 @@ class node:
     
     def __lt__ (self, comp):
         return self.cost < comp.cost
+    
+class Run:
+    def __init__(self, type, arr):
+        self.tree = Tree()
+        self.queue = []
+        self.found = None
+        self.type = type
+
+        root = grid(8, arr)
+        self.tree.create_node(root.getString(), root.getString(), data=root)
+        hq.heappush(self.queue, node(0, root.getString()))
+
+    def expand(self, inNode):
+        for i in range(4):
+            c = copy.deepcopy(inNode)
+            c.parent = inNode
+
+            if i == 0:
+                c.left()
+            elif i == 1:
+                c.right()
+            elif i == 2:
+                c.up()
+            elif i == 3:
+                c.down()
+
+            if c.getString() == inNode.getString():
+                continue
+
+            fail = False
+            try:
+                self.tree.create_node(c.getString(), c.getString(), parent=node.getString(), data=c)
+            except x.DuplicatedNodeIdError:
+                fail = True
+
+            if not fail:
+                cost = 0
+
+                if self.heuristic == h1:
+                    cost = c.heuristic1()
+                elif self.heuritic == h2:
+                    cost = c.heuristic2()
+                elif self.heuristic == h3:
+                    cost = c.h3()
+
+                if self.type == aStar:
+                    n = self.tree.get_node(c.getString())
+                    d = self.tree.depth(n)
+                    cost += d
+                
+                hq.heappush(self.queue, self.node(cost, c.getString()))
+
+    def expandCheapest(self):
+        cheapest = hq.heappop(self.queue)
+        node = self.tree.get_node(cheapest.getString()).data
+
+        if node.goal():
+            self.found = node
+        else:
+            self.expand(node)
+
+    def showPath(self, node, result):
+        result.insert(0, node.arr)
+
+    def run(self, limit=100000):
+        for i in range(limit):
+            self.expandCheapest()
+        
+        if self.found:
+            print("Nodes expanded: ", i)
+            path = []
+            path = self.
+
 
 def main():
     arrs = []
