@@ -5,9 +5,6 @@ import numpy as np
 import copy
 import heapq as hq
 from treelib import Tree, exceptions as x
-import sys
-
-sys.setrecursionlimit(10**6)
 
 goalArray = [1, 2, 3, 4, 5, 6, 7, 8, 0]
 
@@ -20,13 +17,14 @@ h3 = 2
 
 class grid:
     def __init__(self, size, arr):
-        self.size = size + 1
+        self.size = size
         self.width = int(math.sqrt(self.size))
         self.array = ()
         self.goal = np.array(goalArray)
         self.parent = None
 
         self.array = np.array(arr)
+        
     
     @staticmethod
     def find(array, num):
@@ -37,7 +35,7 @@ class grid:
         return self.find(self.array, 0)
     
     def swap(self, a, b):
-        if a < 0 or a > self.size - 1 or b < 0 or b > self.size - 1:
+        if (a < 0) or (a > self.size - 1) or (b < 0) or (b > self.size - 1):
             return False
         
         temp = self.array[a]
@@ -120,7 +118,7 @@ class grid:
         total = 0
         for  i in range(0, self.size - 1):
             for j in range(i + 1, self.size):
-                if self.array[i] != 0 and self.array[j] != 0 and self.array[i] > self.array[j]:
+                if (self.array[i] != 0) and (self.array[j] != 0) and (self.array[i] > self.array[j]):
                     total += 1
 
         return total % 2 == 0
@@ -136,10 +134,11 @@ class Run:
         self.tree = Tree()
         self.queue = []
         self.found = None
+        self.curr = None
         self.type = type
         self.heuristic = heuristic
 
-        root = grid(8, arr)
+        root = grid(9, arr)
         self.tree.create_node(root.getString(), root.getString(), data=root)
         hq.heappush(self.queue, self.node(0, root.getString()))
 
@@ -153,8 +152,9 @@ class Run:
 
     def expand(self, inNode):
         for i in range(4):
-            c = copy.copy(inNode)
-            c.array = np.copy(inNode.array)
+            c = copy.deepcopy(inNode)
+            # c.array = np.copy(inNode.array)
+            # c.goal = np.copy(inNode.goal)
             c.parent = inNode
 
             if i == 0:
@@ -199,10 +199,10 @@ class Run:
         if node.solved():
             self.found = node
         else:
+            self.curr = node
             self.expand(node)
 
     def showPath(self, node, result):
-        # print(type(node))
         result.insert(0, node.array)
         if node.parent:
             return self.showPath(node.parent, result)
@@ -225,12 +225,29 @@ class Run:
                         print(" -> ", end='')
                 print()
                 break
+        
+        if not self.found:
+            print("NOT SOLVED!")
+            
+            print("Nodes expanded: ", i)
+            path = []
+            path = self.showPath(self.curr, path)
+            print("Steps to find solution:", len(path))
+            for j in range(len(path)):
+                print(path[j], end='')
+                if j != len(path) - 1:
+                    print(" -> ", end='')
+            print()
 
 def main():
-    arrs = []
-    for i in range(5):
-        arrs.append(goalArray.copy())
-        random.shuffle(arrs[i])
+    arrs = [[7, 8, 0, 6, 2, 3, 5, 4, 1],
+            [3, 6, 1, 8, 7, 4, 2, 5, 0],
+            [3, 0, 8, 6, 7, 1, 2, 4, 5],
+            [3, 5, 4, 1, 2, 0, 7, 6, 8],
+            [4, 2, 6, 3, 0, 7, 8, 1, 5]]
+    # for i in range(5):
+    #     arrs.append(goalArray.copy())
+    #     random.shuffle(arrs[i])
 
     # print(arrs)
 
@@ -241,7 +258,7 @@ def main():
                 print(f"\nSearch method: {search}\tHeuristic: {j + 1}\tArray ({k + 1}): {arrs[k]}")
                 run = Run(i, arrs[k], j)
                 run.run()
-
+    x = input()
     return
 
 if __name__ == '__main__':
