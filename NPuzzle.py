@@ -240,14 +240,22 @@ class Run:
             print()
 
 def main():
-    arrs = [[7, 8, 0, 6, 2, 3, 5, 4, 1],
-            [3, 6, 1, 8, 7, 4, 2, 5, 0],
-            [3, 0, 8, 6, 7, 1, 2, 4, 5],
-            [3, 5, 4, 1, 2, 0, 7, 6, 8],
-            [4, 2, 6, 3, 0, 7, 8, 1, 5]]
-    # for i in range(5):
-    #     arrs.append(goalArray.copy())
-    #     random.shuffle(arrs[i])
+    arrs = []
+    
+    print("1: Preset (guaranteed to solve)")
+    print("2: Random (may not solve)")
+    choice = int(input("Select an option: "))
+
+    if (choice == 1):
+        arrs = [[7, 8, 0, 6, 2, 3, 5, 4, 1],
+                [3, 6, 1, 8, 7, 4, 2, 5, 0],
+                [3, 0, 8, 6, 7, 1, 2, 4, 5],
+                [3, 5, 4, 1, 2, 0, 7, 6, 8],
+                [4, 2, 6, 3, 0, 7, 8, 1, 5]]
+    else:  
+        for i in range(5):
+            arrs.append(goalArray.copy())
+            random.shuffle(arrs[i])
 
     # print(arrs)
 
