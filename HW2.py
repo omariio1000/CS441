@@ -46,9 +46,9 @@ for i in range(np.size(etas)):
         results[i, 2, k] = min[-2][2]
         # print(f"({min[-2][1]}, {min[-2][2]})")
     
-    print(f"Average value: ({round(np.average(results[i][1]), i + 1)}, {round(np.average(results[i][2]), i + 1)})")
+    print(f"Average value: {np.average(results[i][0]):.3f} ({round(np.average(results[i][1]), i + 1)}, {round(np.average(results[i][2]), i + 1)})")
     
     bestIdx = np.argmin(results[i][0])
-    print(f"Best value: ({round(results[i][1][bestIdx], i + 1)}, {round(results[i][2][bestIdx], i + 1)})\n")
+    print(f"Best value: {results[i][0][bestIdx]:.3f} ({round(results[i][1][bestIdx], i + 1)}, {round(results[i][2][bestIdx], i + 1)})\n")
 
 # print(results)
