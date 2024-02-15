@@ -34,8 +34,8 @@ for i in range(np.size(etas)):
         for j in range(steps):
             min.append(np.zeros(3))
             ret = gradient(min[j][1], min[j][2])
-            min[j + 1][1] = min[j][1] - round(etas[i] * ret[0], i + 1)
-            min[j + 1][2] = min[j][2] - round(etas[i] * ret[1], i + 1)
+            min[j + 1][1] = min[j][1] - (etas[i] * ret[0])
+            min[j + 1][2] = min[j][2] - (etas[i] * ret[1])
             min[j + 1][0] = function(min[j+1][1], min[j+1][2])
 
             if (min[j + 1][0] > min[j][0]):
