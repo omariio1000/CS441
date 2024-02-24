@@ -10,16 +10,12 @@ mutationPct = 0.01
 boardSize = 8
 
 class board:
-    def __init__(self, queens = None, randPos = False):
+    def __init__(self, queens = None):
         self.queens = queens
         if (self.queens == None):
             self.queens = []
-            if randPos:
-                for i in range(boardSize):
-                    self.queens.append(random.randint(0, boardSize - 1))
-            else:
-                self.queens = list(range(boardSize))
-                random.shuffle(self.queens)
+            self.queens = list(range(boardSize))
+            random.shuffle(self.queens)
 
         self.fitness = checkFitness(self.queens)
 
@@ -31,6 +27,7 @@ def printBoard(queens):
             else:
                 print(" - ", end="")
         print()
+    print()
 
 def attacking(c1, r1, c2, r2) -> bool:
     if (r1 == r2):
@@ -77,55 +74,37 @@ def selectParents(pop):
 
     return p1, p2
 
-def crossover(p1, p2, cross = True, rand = False):
-    if not cross:
-        return board(mutate(p1.queens)), board(mutate(p2.queens))
-    
+def crossover(p1, p2):   
     c1 = c2 = []
-    if not rand:
-        randLoc = random.randrange(1, boardSize - 1)
-        for i in range(0, boardSize):
-            for j in range(0, randLoc):
-                if p2.queens[i] == p1.queens[j]:
-                    c1.append(p2.queens[i])
-        
-        for i in range(randLoc, boardSize):
-            c1.append(p1.queens[i])
+    randLoc = random.randrange(1, boardSize - 1)
+    for i in range(0, boardSize):
+        for j in range(0, randLoc):
+            if p2.queens[i] == p1.queens[j]:
+                c1.append(p2.queens[i])
+    
+    for i in range(randLoc, boardSize):
+        c1.append(p1.queens[i])
 
-        for i in range(0, randLoc):
-            c2.append(p2.queens[i])
-        
-        for i in range(0, boardSize):
-            for j in range(randLoc, boardSize):
-                if p1.queens[i] == p2.queens[j]:
-                    c2.append(p1.queens[i])
-    else:
-        randLoc = random.randrange(0, boardSize)
-        for i in range(randLoc):
-            c1.append(p1.queens[i])
-            c2.append(p2.queens[i])
-        
-        for i in range(randLoc, boardSize):
-            c1.append(p2.queens[i])
-            c2.append(p1.queens[i])
+    for i in range(0, randLoc):
+        c2.append(p2.queens[i])
+    
+    for i in range(0, boardSize):
+        for j in range(randLoc, boardSize):
+            if p1.queens[i] == p2.queens[j]:
+                c2.append(p1.queens[i])
 
     c1 = mutate(c1)
     c2 = mutate(c2)
 
     return board(c1), board(c2)
     
-def mutate(c, rand = False):
+def mutate(c):
     
     if random.uniform(0, 1) < mutationPct:
-        if not rand:
-            i = random.sample(range(0, boardSize), 2)
-            temp = c[i[0]]
-            c[i[0]] = c[i[1]]
-            c[i[1]] = temp
-        else:
-            randGene = random.randint(0, boardSize - 1)
-            randMut = random.randint(0, boardSize - 1)
-            c[randGene] = randMut
+        i = random.sample(range(0, boardSize), 2)
+        temp = c[i[0]]
+        c[i[0]] = c[i[1]]
+        c[i[1]] = temp
 
     return c
 
@@ -139,7 +118,21 @@ def popFit(pop, average = False):
     
     return totalFit / ((math.comb(boardSize, 2) + 1) * popSize)
 
+def maxFit(pop, printed):
+    maxFit = 0
+    solution = -1
+    for i in range(len(pop)):
+        if (pop[i].fitness > maxFit):
+            maxFit = pop[i].fitness
+
+        if not printed and (pop[i].fitness == math.comb(boardSize, 2) + 1):
+            solution = i
+
+    return maxFit, solution
+
 def main():
+    printedSolution = False
+
     children = []
     for i in range(popSize):
         children.append(board())
@@ -151,11 +144,15 @@ def main():
     improveCount = 0
     x = np.empty(1)
     y = np.empty(1)
+    y2 = np.empty(1)
     
     fitness = popFit(children, True)
+    maxFitness, solution = maxFit(children, True)
+
     print(f"Average Fitness (Gen 0): \t{fitness:.3f}")
     x = np.append(x, 0)
     y = np.append(y, fitness)
+    y2 = np.append(y2, maxFitness)
 
     for i in range(numIterations):
         parents = children
@@ -179,18 +176,47 @@ def main():
             children.append(c2)
         
         fitness = popFit(children, True)
+        maxFitness, solution = maxFit(children, printedSolution)
+
+        if (solution != -1):
+            initPrint = random.randint(0, popSize - 1)
+            print(f"\nPrinting sample solution (Gen {i + 1}, Idx: {solution}, Fitness: {children[solution].fitness}): ")
+            printBoard(children[solution].queens)
+            printedSolution = True
+
         print(f"Average Fitness (Gen {i + 1}): \t{fitness:.3f}")
         x = np.append(x, i + 1)
         y = np.append(y, fitness)
+        y2 = np.append(y2, maxFitness)
 
     finPrint = random.randint(0, popSize - 1)
-    print(f"\nPrinting random example of initial population (Idx: {finPrint}, Fitness: {children[finPrint].fitness}): ")
+    print(f"\nPrinting random example of final population (Idx: {finPrint}, Fitness: {children[finPrint].fitness}): ")
     printBoard(children[finPrint].queens)
 
     print(f"\n{((improveCount / ((popSize/2) * numIterations)) * 100):.3f}% of children improved upon their parents")
-    plt.plot(x, y)
-    plt.xlim([0, numIterations])
-    plt.ylim([0, 1])
+
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+
+    ax1.plot(x, y, color='g')
+    ax2.plot(x, y2, color='b')
+
+    ax1.grid()
+    ax2.grid()
+
+    ax1.set_xlim([0, numIterations])
+    ax1.set_ylim([0.6, 1.0])
+
+    ax2.set_xlim([0, numIterations])
+    ax2.set_ylim([24, math.comb(boardSize, 2) + 2])
+
+    ax1.set_title(label='Generations vs. Average Fitness')
+    ax1.set_xlabel('Generation Number')
+    ax1.set_ylabel('Average Fitness')
+    
+    ax2.set_title(label='Generations vs. Best Fitness')
+    ax2.set_xlabel('Generation Number')
+    ax2.set_ylabel('Best Fitness (higher is better)')
+
     plt.show()
     return
 
