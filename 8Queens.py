@@ -116,7 +116,7 @@ def popFit(pop, average = False):
     if not average:
         return totalFit
     
-    return totalFit / ((math.comb(boardSize, 2) + 1) * popSize)
+    return totalFit / popSize
 
 def maxFit(pop, printed):
     maxFit = 0
@@ -204,10 +204,10 @@ def main():
     ax2.grid()
 
     ax1.set_xlim([0, numIterations])
-    ax1.set_ylim([0.6, 1.0])
+    ax1.set_ylim([22, math.comb(boardSize, 2) + 2])
 
     ax2.set_xlim([0, numIterations])
-    ax2.set_ylim([24, math.comb(boardSize, 2) + 2])
+    ax2.set_ylim([22, math.comb(boardSize, 2) + 2])
 
     ax1.set_title(label='Generations vs. Average Fitness')
     ax1.set_xlabel('Generation Number')
