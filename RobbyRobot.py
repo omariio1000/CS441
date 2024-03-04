@@ -200,7 +200,7 @@ def main():
     ax1.set_ylim([0, math.ceil(np.max(y1)/100) * 100])
 
     ax2.set_xlim([0, episodes])
-    ax1.set_ylim([0, math.ceil(np.max(y2)/100) * 100])
+    ax2.set_ylim([0, math.ceil(np.max(y2)/100) * 100])
 
     ax1.set_title(label='Training Data')
     ax1.set_xlabel('Episode')
